@@ -11,14 +11,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JFrame;
 import javax.swing.JButton;
+import java.util.ArrayList; 
+import java.util.List; 
 /**
  *
  * @author gugas, hugoriosbrito
  */
 public class vetorframe extends javax.swing.JFrame {
     
-    //TODO: Resolver BUG que sempre reinicia o tempo decorrido se o usuário clicar no botão 'Iniciar'.
-
     /**
      * Creates new form vetorframe
      */
@@ -26,18 +26,21 @@ public class vetorframe extends javax.swing.JFrame {
     private Instant tempoInicio;
     private Timer cronometro;
     private JButton[] botoes;
+    int numeroJogadas = 1;
     boolean enc = false;
     boolean primeiraAbertura = true;
     String tempoZerado = "00:00:00";
     Random aleatorio = new Random();
     
     JFrame frame = new JFrame();
-
+  
     
     public vetorframe() {
         initComponents();
         
         botoes = new JButton[] {b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16};
+       
+        
     }
     
     public void limparTela(){
@@ -71,7 +74,7 @@ public class vetorframe extends javax.swing.JFrame {
  
         for(int i = 0; i < 15; i++){
             vetor[i] = String.valueOf(i + 1);
-            System.out.println(vetor[i]);
+            //System.out.println(vetor[i]);
             
         }
         vetor[15] = "";
@@ -79,9 +82,13 @@ public class vetorframe extends javax.swing.JFrame {
         //print do vetor organizado
         System.out.println("Organizado: ");
         for(int i = 0; i < 16; i++){
-            System.out.println(vetor[i]);
+            String temp = vetor[i];
+            vetor[i] = vetor[j];
+            vetor[j] = temp;
         }
         */
+        
+        //FOR CORRETO
         
         for(int i = vetor.length - 1; i > 0; i--){
             int j = aleatorio.nextInt(i + 1);
@@ -89,6 +96,8 @@ public class vetorframe extends javax.swing.JFrame {
             vetor[i] = vetor[j];
             vetor[j] = temp;
         }
+        
+        
         /*
         ///print do vetor embaralhado
         System.out.println("Embaralhado: ");
@@ -97,12 +106,19 @@ public class vetorframe extends javax.swing.JFrame {
         }
         */
     }
+
     
     public void iniciarJogo(){
-        if (primeiraAbertura == true){
+        if (primeiraAbertura){
        
-            embaralhar();
-
+            do {
+                embaralhar();
+                for(int i = 0; i < 16; i++){
+                    System.out.println(vetor[i]);
+                }
+            } while (checarImpossibilidade(vetor));     
+            
+      
             b1.setText(vetor[0]);
             b2.setText(vetor[1]);
             b3.setText(vetor[2]);
@@ -119,9 +135,11 @@ public class vetorframe extends javax.swing.JFrame {
             b14.setText(vetor[13]);
             b15.setText(vetor[14]);
             b16.setText(vetor[15]);
+            
 
             enc = false;
             primeiraAbertura = false;
+            
         } else if (primeiraAbertura == false) {
             JOptionPane.showMessageDialog(frame,"Jogo já iniciado!", "Erro!",JOptionPane.ERROR_MESSAGE); //Adicionado verificação de jogo já iniciado
         }
@@ -170,6 +188,7 @@ public class vetorframe extends javax.swing.JFrame {
         }
     }
         
+    
     /*
     
     Retorna a posição int no vetor em que está o botão atual clicado, se não, retorna -1(que não causa movimentação de nenhum botão).
@@ -187,6 +206,7 @@ public class vetorframe extends javax.swing.JFrame {
     /*
     
     Retorna a posição do botão ao redor do botão atual que está vazio
+    obs.: retirado o movimento nas diagonais
     
     */
     public int getProximoBotaoVazio(String[] posicoes, String textoBotaoAtual){        
@@ -195,14 +215,10 @@ public class vetorframe extends javax.swing.JFrame {
         int posicaoEsquerda = posAtual - 1;
         
         int posicaoCima = posAtual - 4;
-        int posicaoCimaDireita = posAtual - 3;
-        int posicaoCimaEsquerda = posAtual - 5;
         
         int posicaoBaixo = posAtual + 4;
-        int posicaoBaixoDireita = posAtual + 5;
-        int posicaoBaixoEsquerda = posAtual + 3;
         
-        int[] aVerificar = {posicaoDireita,posicaoEsquerda,posicaoCima,posicaoCimaDireita,posicaoCimaEsquerda,posicaoBaixo,posicaoBaixoDireita,posicaoBaixoEsquerda};
+        int[] aVerificar = {posicaoDireita,posicaoEsquerda,posicaoCima,posicaoBaixo};
         
         for (int i = 0; i < aVerificar.length; i++){
             int posVizinho = aVerificar[i];
@@ -216,6 +232,109 @@ public class vetorframe extends javax.swing.JFrame {
         return -1; 
     };
     
+    public boolean checarImpossibilidade(String[] posicoes) {
+
+        int quantidadeInversao = 0;
+        List<Integer> numeros = new ArrayList<>();
+        int indiceEspacoVazio = -1;
+
+        for (int i = 0; i < posicoes.length; i++) {
+            String s = posicoes[i];
+            if (s == null || s.trim().isEmpty()) {
+                if (indiceEspacoVazio == -1) {
+                    indiceEspacoVazio = i;
+                }
+                continue; 
+            }
+            try {
+                numeros.add(Integer.parseInt(s));
+            } catch (NumberFormatException e) {
+                System.err.println("Erro em checarImpossibilidade: Posição inválida (não é número): '" + s + "'");
+                return true;
+            }
+        }
+
+        if (indiceEspacoVazio == -1) {
+            System.err.println("Erro em checarImpossibilidade: Espaço vazio não encontrado no tabuleiro!");
+            return true; 
+        }
+
+        for (int i = 0; i < numeros.size(); i++) {
+            for (int j = i + 1; j < numeros.size(); j++) {
+                if (numeros.get(i) > numeros.get(j)) {
+                    quantidadeInversao++;
+                }
+            }
+        }
+
+        int linha0IdxDeCima = indiceEspacoVazio / 4;
+        int linha1IdxDeBaixo = 4 - linha0IdxDeCima;
+
+        boolean paridadeInversoesEhPar = (quantidadeInversao % 2) == 0;
+        boolean linhaEspacoVazioEhPar = (linha1IdxDeBaixo % 2) == 0;
+
+        System.out.println("Total de inversões: " + quantidadeInversao + (paridadeInversoesEhPar ? " (PAR)" : " (ÍMPAR)"));
+
+        if (linhaEspacoVazioEhPar) { 
+            if (paridadeInversoesEhPar) {
+                return true; 
+            } else {
+                return false; 
+            }
+        } else {
+            if (!paridadeInversoesEhPar) {
+                return true; 
+            } else {
+                return false; 
+            }
+        }
+    }
+
+
+    public boolean checarVitoria(String[] posicoes) {
+        if (posicoes == null || posicoes.length != 16) {
+            return false; 
+        }
+
+        for (int i = 0; i < 16; i++) {
+            String valorNaPosicao = posicoes[i];
+
+            if (i < 15) { 
+                String valorEsperadoString = String.valueOf(i + 1);
+                try {
+                    if (valorNaPosicao == null || valorNaPosicao.trim().isEmpty()) {
+                        return false; 
+                    }
+                    if (!valorNaPosicao.equals(valorEsperadoString)) {
+                        return false; 
+                    }
+                } catch (NumberFormatException e) { 
+                    return false;
+                }
+            } else { 
+                if (valorNaPosicao == null || !valorNaPosicao.trim().isEmpty()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+    
+    public void vitoriaConfirmada(){
+        System.out.println("Parabens você venceu");
+        JOptionPane.showMessageDialog(frame, "Parabéns, você venceu em " + tempo.getText().replace("Tempo Decorrido: ", "") + " com " + numeroJogadas + " jogadas"+ "!", "Vitória!", JOptionPane.INFORMATION_MESSAGE);
+        reiniciarJogo();
+    }
+    
+    public void reiniciarJogo(){
+        limparTela();
+        primeiraAbertura = true;
+        pararContador();
+        enc=true;
+        numeroJogadas = 1;
+        mensagemIni.setText("");
+    }
     
     /*
     
@@ -225,6 +344,8 @@ public class vetorframe extends javax.swing.JFrame {
     public void trocarValoresBotoes(String textoPosAtual){
         int posProx = getProximoBotaoVazio(vetor, textoPosAtual);
         int posAtual = getPosicaoBotaoAtual(vetor, textoPosAtual);
+        mensagemIni.setText("Jogadas: " + Integer.toString(numeroJogadas));
+        numeroJogadas++;
         
         if (!textoPosAtual.equals("")){
             String tempTexto = vetor[posAtual];
@@ -232,8 +353,13 @@ public class vetorframe extends javax.swing.JFrame {
             vetor[posProx]  = tempTexto;
             
             atualizarInterface();
-                               
+            boolean vitoria = checarVitoria(vetor);
+            if (vitoria == true){
+                vitoriaConfirmada();
+            }
+            
         }
+        
     }
     
     /*
@@ -400,7 +526,6 @@ public class vetorframe extends javax.swing.JFrame {
         getContentPane().add(tempo, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 130, -1, -1));
 
         mensagemIni.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        mensagemIni.setText("Mensagem");
         getContentPane().add(mensagemIni, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 10, -1, -1));
 
         iniciar.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
@@ -428,6 +553,7 @@ public class vetorframe extends javax.swing.JFrame {
     private void b11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b11ActionPerformed
         // TODO add your handling code here:
         trocarValoresBotoes(b11.getText());
+        
     }//GEN-LAST:event_b11ActionPerformed
 
     private void b1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b1ActionPerformed
@@ -439,11 +565,13 @@ public class vetorframe extends javax.swing.JFrame {
         // TODO add your handling code here:
         trocarValoresBotoes(b2.getText());
 
+
     }//GEN-LAST:event_b2ActionPerformed
 
     private void b3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b3ActionPerformed
         // TODO add your handling code here:
         trocarValoresBotoes(b3.getText());
+
 
     }//GEN-LAST:event_b3ActionPerformed
 
@@ -451,11 +579,13 @@ public class vetorframe extends javax.swing.JFrame {
         // TODO add your handling code here:
         trocarValoresBotoes(b4.getText());
 
+
     }//GEN-LAST:event_b4ActionPerformed
 
     private void b5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b5ActionPerformed
         // TODO add your handling code here:
         trocarValoresBotoes(b5.getText());
+
 
     }//GEN-LAST:event_b5ActionPerformed
 
@@ -521,10 +651,7 @@ public class vetorframe extends javax.swing.JFrame {
         // TODO add your handling code here:
         int resposta = JOptionPane.showConfirmDialog(frame,"Quer mesmo reiniciar?", "Reiniciar", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (resposta == JOptionPane.YES_OPTION){
-            limparTela();
-            primeiraAbertura = true;
-            pararContador();
-            enc=true;
+            reiniciarJogo();
         } else if (resposta == JOptionPane.NO_OPTION){
             frame.dispose();
         }
